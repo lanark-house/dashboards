@@ -24,14 +24,17 @@ RUN dnf -y install epel-release && \
       chromium \
       xorg-x11-server-Xorg \
       xorg-x11-xinit \
-      unclutter \
+      unclutter-xfixes \
       google-noto-sans-fonts \
       dejavu-sans-fonts \
     && dnf clean all
 
-# Ensure chromium-browser binary link exists
+# Ensure chromium-browser and unclutter binary links exist
 RUN if [ ! -f /usr/bin/chromium-browser ] && [ -f /usr/bin/chromium ]; then \
       ln -s /usr/bin/chromium /usr/bin/chromium-browser; \
+    fi && \
+    if [ ! -f /usr/bin/unclutter ] && [ -f /usr/bin/unclutter-xfixes ]; then \
+      ln -s /usr/bin/unclutter-xfixes /usr/bin/unclutter; \
     fi
 
 WORKDIR /opt/dashboard
