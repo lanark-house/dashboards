@@ -1,0 +1,15 @@
+[Unit]
+Description=ESPHome Host Service for Display Control
+After=network.target kiosk.service
+Wants=kiosk.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/dashboard/esphome
+ExecStart=/usr/local/bin/esphome run /opt/dashboard/esphome/kiosk-display.yaml
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
