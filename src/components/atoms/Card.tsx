@@ -10,13 +10,14 @@ export const Card: React.FC<CardProps> = ({ children, className = "", style }) =
   return (
     <div
       style={{
-        backgroundColor: "rgba(15, 23, 42, 0.8)",
-        borderColor: "rgba(30, 41, 59, 0.8)",
+        backgroundColor: "rgba(255, 255, 255, 0.65)",
+        borderColor: "rgba(122, 139, 123, 0.25)",
         borderWidth: "1px",
         borderStyle: "solid",
-        borderRadius: "0.75rem",
-        padding: "0.75rem",
-        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+        borderRadius: "1rem",
+        padding: "1.25rem",
+        boxShadow: "0 4px 20px -2px rgba(44, 53, 49, 0.05)",
+        backdropFilter: "blur(8px)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
