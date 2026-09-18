@@ -15,6 +15,9 @@
 # production
 /build
 
+# esphome
+.esphome/
+
 # misc
 .DS_Store
 *.pem

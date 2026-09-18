@@ -16,7 +16,8 @@ RUN pnpm run build
 # Stage 2: Target Rocky Linux / CentOS Stream bootc system image
 FROM quay.io/centos-bootc/centos-bootc:stream9
 
-# Install Node.js LTS runtime, Chromium browser, X11 server, unclutter, and essential fonts
+# Install Node.js LTS runtime, Chromium browser, X11 server, unclutter, essential fonts,
+# Python 3, C++ build tools (for ESPHome host platform build), and xorg server utils (xset)
 RUN dnf -y install epel-release && \
     dnf -y install \
       nodejs \
@@ -24,10 +25,19 @@ RUN dnf -y install epel-release && \
       chromium \
       xorg-x11-server-Xorg \
       xorg-x11-xinit \
+      xorg-x11-server-utils \
       unclutter-xfixes \
       google-noto-sans-fonts \
       dejavu-sans-fonts \
+      python3 \
+      python3-pip \
+      gcc \
+      gcc-c++ \
+      make \
     && dnf clean all
+
+# Install ESPHome
+RUN pip3 install --no-cache-dir esphome
 
 # Ensure chromium-browser and unclutter binary links exist
 RUN if [ ! -f /usr/bin/chromium-browser ] && [ -f /usr/bin/chromium ]; then \
@@ -49,7 +59,12 @@ COPY --from=builder /app/node_modules /opt/dashboard/node_modules
 COPY bootc/scripts/launch-kiosk.sh /opt/dashboard/scripts/launch-kiosk.sh
 RUN chmod +x /opt/dashboard/scripts/launch-kiosk.sh
 
+# Copy ESPHome host platform configuration and pre-compile binary
+COPY bootc/esphome /opt/dashboard/esphome
+RUN esphome compile /opt/dashboard/esphome/kiosk-display.yaml
+
 # Copy systemd unit files and enable them
 COPY bootc/systemd/dashboard-nextjs.service /etc/systemd/system/dashboard-nextjs.service
 COPY bootc/systemd/kiosk.service /etc/systemd/system/kiosk.service
-RUN systemctl enable dashboard-nextjs.service kiosk.service
+COPY bootc/systemd/esphome.service /etc/systemd/system/esphome.service
+RUN systemctl enable dashboard-nextjs.service kiosk.service esphome.service
