@@ -24,6 +24,7 @@ RUN dnf -y install epel-release && \
       chromium \
       xorg-x11-server-Xorg \
       xorg-x11-xinit \
+      xorg-x11-server-utils \
       unclutter \
       google-noto-sans-fonts \
       dejavu-sans-fonts \
@@ -34,6 +35,10 @@ RUN if [ ! -f /usr/bin/chromium-browser ] && [ -f /usr/bin/chromium ]; then \
       ln -s /usr/bin/chromium /usr/bin/chromium-browser; \
     fi
 
+# Create non-root kiosk service user and add to necessary hardware access groups
+RUN useradd -m -s /bin/bash kiosk && \
+    usermod -aG video,input,render,tty kiosk
+
 WORKDIR /opt/dashboard
 
 # Copy pre-built Next.js production assets and node_modules from stage 1
@@ -42,11 +47,25 @@ COPY --from=builder /app/public /opt/dashboard/public
 COPY --from=builder /app/package.json /opt/dashboard/package.json
 COPY --from=builder /app/node_modules /opt/dashboard/node_modules
 
+# Ensure /opt/dashboard and /home/kiosk are owned by kiosk user
+RUN chown -R kiosk:kiosk /opt/dashboard /home/kiosk
+
 # Copy kiosk launch script and set executable permissions
 COPY bootc/scripts/launch-kiosk.sh /opt/dashboard/scripts/launch-kiosk.sh
-RUN chmod +x /opt/dashboard/scripts/launch-kiosk.sh
+RUN chmod +x /opt/dashboard/scripts/launch-kiosk.sh && chown kiosk:kiosk /opt/dashboard/scripts/launch-kiosk.sh
 
-# Copy systemd unit files and enable them
+# Copy systemd unit files
 COPY bootc/systemd/dashboard-nextjs.service /etc/systemd/system/dashboard-nextjs.service
 COPY bootc/systemd/kiosk.service /etc/systemd/system/kiosk.service
-RUN systemctl enable dashboard-nextjs.service kiosk.service
+
+# Physical Security Hardening & Bootc Auto-Updates
+# Lock root password and mask debug/emergency/rescue services and ctrl-alt-del target
+RUN passwd -l root && \
+    systemctl mask debug-shell.service \
+                   ctrl-alt-del.target \
+                   emergency.service \
+                   emergency.target \
+                   rescue.service \
+                   rescue.target
+
+RUN systemctl enable dashboard-nextjs.service kiosk.service bootc-fetch-apply-updates.timer

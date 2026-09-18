@@ -2,9 +2,15 @@ name: Build bootc Image
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   build-bootc:
@@ -15,9 +21,35 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Downcase Repository Name for GHCR Image Reference
+        id: image_ref
+        run: |
+          IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_OUTPUT
+
       - name: Build OCI Container Image
         run: |
-          podman build -f bootc/Containerfile -t dashboard-bootc:latest .
+          podman build -f bootc/Containerfile \
+            -t dashboard-bootc:latest \
+            -t ${{ steps.image_ref.outputs.IMAGE_NAME }}:latest \
+            -t ${{ steps.image_ref.outputs.IMAGE_NAME }}:${{ github.sha }} .
+
+      - name: Push OCI Container Image to GHCR
+        run: |
+          podman push ${{ steps.image_ref.outputs.IMAGE_NAME }}:latest
+          podman push ${{ steps.image_ref.outputs.IMAGE_NAME }}:${{ github.sha }}
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+            podman tag dashboard-bootc:latest ${{ steps.image_ref.outputs.IMAGE_NAME }}:${TAG_NAME}
+            podman push ${{ steps.image_ref.outputs.IMAGE_NAME }}:${TAG_NAME}
+          fi
 
       - name: Prepare Disk Image Output Directory
         run: |

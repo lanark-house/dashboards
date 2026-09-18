@@ -5,7 +5,12 @@ Wants=dashboard-nextjs.service
 
 [Service]
 Type=simple
-User=root
+User=kiosk
+Group=kiosk
+SupplementaryGroups=video input render tty
+WorkingDirectory=/home/kiosk
+PAMName=login
+TTYPath=/dev/tty7
 Environment=DISPLAY=:0
 ExecStart=/usr/bin/xinit /opt/dashboard/scripts/launch-kiosk.sh -- :0 vt7
 Restart=always
