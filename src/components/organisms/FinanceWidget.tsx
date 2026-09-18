@@ -5,6 +5,7 @@ import { StandardWidget, WidgetSize } from "../templates/StandardWidget";
 import { MetricCard } from "../molecules/MetricCard";
 import { Sparkline } from "../molecules/Sparkline";
 import { StatusIndicator } from "../molecules/StatusIndicator";
+import { CloverIcon } from "../atoms/CloverIcon";
 
 interface FinanceData {
   portfolioValue: number;
@@ -29,32 +30,32 @@ export const FinanceWidget: React.FC<{ size?: WidgetSize }> = ({ size = "medium"
   }, []);
 
   return (
-    <StandardWidget title="Finance & Markets" size={size} loading={loading}>
+    <StandardWidget title="Finance & Assets" size={size} loading={loading} icon={<CloverIcon className="w-4 h-4 text-[#8EA483]" />}>
       {data && (
-        <div className="flex flex-col justify-between h-full gap-2">
+        <div className="flex flex-col justify-between h-full gap-2 p-1">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-xs uppercase text-slate-400 font-semibold tracking-wider">
-                Portfolio
+              <span className="font-sans text-xs uppercase text-[#7A8B7B] font-semibold tracking-wider">
+                Portfolio Net
               </span>
-              <div className="text-xl font-bold text-white tracking-tight">
+              <div className="font-serif-display text-3xl font-semibold text-[#2C3531]">
                 ${data.portfolioValue.toLocaleString()}
               </div>
             </div>
             <StatusIndicator status={data.marketStatus} label={data.marketStatus} />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <MetricCard
-              title="24h Change"
+              title="24h Performance"
               value={`+$${data.dayChange}`}
               subtext={`+${data.dayChangePercent}%`}
               trend="up"
-              className="flex-1 py-1 px-2 border-none bg-slate-800/40"
+              className="flex-1 py-1.5 px-2.5 border border-[#7A8B7B]/20 bg-[#F5F2EB]/90 rounded-xl"
             />
             {data.sparkline && (
               <div className="w-1/2">
-                <Sparkline data={data.sparkline} color="#10b981" height={28} />
+                <Sparkline data={data.sparkline} color="#7A8B7B" height={32} />
               </div>
             )}
           </div>

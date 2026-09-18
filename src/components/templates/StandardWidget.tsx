@@ -1,5 +1,6 @@
 import React from "react";
 import { Spinner } from "../atoms/Spinner";
+import { CloverIcon } from "../atoms/CloverIcon";
 
 export type WidgetSize = "small" | "medium" | "large" | "xlarge";
 
@@ -31,14 +32,15 @@ export const StandardWidget: React.FC<StandardWidgetProps> = ({
     <div
       style={{
         ...sizeStyles[size],
-        backgroundColor: "rgba(15, 23, 42, 0.9)",
-        border: "1px solid rgba(30, 41, 59, 0.9)",
+        backgroundColor: "rgba(255, 255, 255, 0.65)",
+        border: "1px solid rgba(122, 139, 123, 0.25)",
         borderRadius: "1rem",
-        padding: "0.75rem",
+        padding: "1rem",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+        boxShadow: "0 4px 15px -2px rgba(44, 53, 49, 0.05)",
+        backdropFilter: "blur(6px)",
         overflow: "hidden",
         position: "relative",
       }}
@@ -50,26 +52,19 @@ export const StandardWidget: React.FC<StandardWidgetProps> = ({
           alignItems: "center",
           justifyContent: "space-between",
           paddingBottom: "0.5rem",
-          borderBottom: "1px solid rgba(30, 41, 59, 0.6)",
+          borderBottom: "1px stroke rgba(122, 139, 123, 0.2)",
           marginBottom: "0.5rem",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          {icon && <span style={{ color: "#818cf8" }}>{icon}</span>}
+          {icon ? icon : <CloverIcon className="w-4 h-4 text-[#8EA483]" />}
           <h3
-            style={{
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              color: "#cbd5e1",
-              margin: 0,
-            }}
+            className="font-serif-display text-sm tracking-widest text-[#2C3531] uppercase font-semibold"
           >
             {title}
           </h3>
         </div>
-        {loading && <Spinner className="w-4 h-4 text-indigo-400" />}
+        {loading && <Spinner className="w-4 h-4 text-[#C86D51]" />}
       </div>
 
       <div
@@ -83,9 +78,9 @@ export const StandardWidget: React.FC<StandardWidgetProps> = ({
       >
         {loading ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <div style={{ height: "1rem", backgroundColor: "#1e293b", borderRadius: "0.25rem", width: "75%" }} />
-            <div style={{ height: "1.75rem", backgroundColor: "#1e293b", borderRadius: "0.25rem", width: "50%" }} />
-            <div style={{ height: "0.75rem", backgroundColor: "#1e293b", borderRadius: "0.25rem", width: "80%" }} />
+            <div style={{ height: "1rem", backgroundColor: "rgba(122, 139, 123, 0.15)", borderRadius: "0.25rem", width: "75%" }} />
+            <div style={{ height: "1.75rem", backgroundColor: "rgba(122, 139, 123, 0.15)", borderRadius: "0.25rem", width: "50%" }} />
+            <div style={{ height: "0.75rem", backgroundColor: "rgba(122, 139, 123, 0.15)", borderRadius: "0.25rem", width: "80%" }} />
           </div>
         ) : (
           children

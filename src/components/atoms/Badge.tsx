@@ -12,15 +12,15 @@ export const Badge: React.FC<BadgeProps> = ({
   className = "",
 }) => {
   const styles = {
-    success: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-    warning: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-    error: "bg-rose-500/15 text-rose-400 border-rose-500/30",
-    neutral: "bg-slate-700/40 text-slate-300 border-slate-600/40",
+    success: "bg-[#7A8B7B]/15 text-[#5C6F5D] border-[#7A8B7B]/30",
+    warning: "bg-[#C86D51]/15 text-[#A85038] border-[#C86D51]/30",
+    error: "bg-rose-500/15 text-rose-700 border-rose-400/30",
+    neutral: "bg-[#2C3531]/10 text-[#2C3531] border-[#2C3531]/20",
   };
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wider border ${styles[variant]} ${className}`}
+      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium tracking-wide border ${styles[variant]} ${className}`}
     >
       {label}
     </span>

@@ -1,49 +1,43 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { CloverIcon } from "../atoms/CloverIcon";
 
-/**
- * ClockDivider displays a real-time 12-hour clock (HH:MM) without AM/PM.
- * Aligns state updates to top-of-the-minute boundary via ceilingMinutes scheduling.
- */
 export const ClockDivider: React.FC<{ className?: string }> = ({ className = "" }) => {
   const [timeStr, setTimeStr] = useState<string>("");
+  const [dateStr, setDateStr] = useState<string>("");
 
   useEffect(() => {
     let timerId: NodeJS.Timeout;
 
     const updateClock = () => {
       const now = new Date();
-      // Format 12-hour time without AM/PM
       let hours = now.getHours() % 12;
       if (hours === 0) hours = 12;
       const minutes = now.getMinutes().toString().padStart(2, "0");
       setTimeStr(`${hours}:${minutes}`);
 
-      // Calculate milliseconds until next minute boundary (ceilingMinutes)
-      const msUntilNextMinute =
-        (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+      const options: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric' };
+      setDateStr(now.toLocaleDateString('en-US', options));
 
-      timerId = setTimeout(() => {
-        updateClock();
-      }, msUntilNextMinute);
+      const msUntilNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+      timerId = setTimeout(updateClock, msUntilNextMinute);
     };
 
     updateClock();
-
     return () => clearTimeout(timerId);
   }, []);
 
   return (
-    <div
-      className={`w-full py-2 flex items-center justify-center my-1 select-none ${className}`}
-    >
-      <div className="flex items-center gap-4 bg-slate-900/90 border border-slate-800/80 px-8 py-1.5 rounded-full shadow-lg backdrop-blur-md">
-        <div className="h-0.5 w-12 bg-gradient-to-r from-transparent to-indigo-500/50"></div>
-        <span className="text-xl font-black tracking-widest text-indigo-300 font-mono animate-pulse">
+    <div className={`w-full py-2 flex items-center justify-center my-2 select-none ${className}`}>
+      <div className="flex items-center gap-3 bg-[#F5F2EB]/90 border border-[#7A8B7B]/30 px-6 py-2 rounded-full shadow-md backdrop-blur-md">
+        <CloverIcon className="w-4 h-4 text-[#8EA483]" />
+        <span className="font-serif-display text-2xl font-semibold tracking-wider text-[#2C3531]">
           {timeStr || "12:00"}
         </span>
-        <div className="h-0.5 w-12 bg-gradient-to-l from-transparent to-indigo-500/50"></div>
+        <span className="text-xs uppercase tracking-widest text-[#7A8B7B] font-medium border-l border-[#7A8B7B]/30 pl-3">
+          {dateStr || "Today"}
+        </span>
       </div>
     </div>
   );

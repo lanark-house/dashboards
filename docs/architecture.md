@@ -1,70 +1,67 @@
-# Architecture Documentation
+# Architecture & Data Pipeline Documentation
 
 ## Overview
 
-The 9:16 Vertical Dashboard Framework is engineered specifically for embedded portrait kiosks (e.g., 1080x1920 displays). Physical portrait kiosks present a challenge: standard modern UI components and video content are overwhelmingly designed for 16:9 widescreen viewports.
+The **Frame Art Dashboard Framework** is engineered specifically for 32" Samsung The Frame (2023) mounted in portrait orientation (1080×1920, 9:16 aspect ratio). Designed for display on a matte QLED IPS panel (~69 PPI), the display architecture prioritizes **eye-level viewing ergonomics**, placing high-utility smart home and telemetry widgets in the upper 65% of the screen while positioning decorative comic and artwork carousels in the lower viewport.
 
-To resolve this disparity, our architecture subdivides the physical 9:16 portrait viewport into a dual-stacked 16:9 layout bridged by a central clock divider.
+### Ergonomic Viewing & Ergonomic Topology
+- **Top 65% Viewport (Eye Level)**: Dynamic Weather Frog Title Hero, Smart Home Telemetry, Financial Portfolio Performance, DevOps/Server Vitals, Clock Divider, and Shared Reminders.
+- **Bottom 35% Viewport**: Comic & Art Carousel (e.g. `r/comics` top highlights or watercolor art series).
+- **Palette**: Warm, muted organic colors: Cream (`#F5F2EB`), Terracotta (`#C86D51`), Sage (`#7A8B7B`), Soft Charcoal (`#2C3531`), and Clover accents (`#8EA483`).
+- **Typography**: Display Serif (*Playfair Display* / *Cormorant Garamond*) for titles & numbers, clean sans-serif (*Plus Jakarta Sans*) for readouts.
+- **Interactivity**: Read-only display kiosk mode.
+
+---
+
+## Layout Topology
 
 ```
-+-----------------------------------+
-|                                   |
-|       Top 16:9 StandardFrame      |
-|    (3 rows x 6 columns grid)      |
-|                                   |
-+-----------------------------------+
-| ====== Center Clock Divider ===== |
-+-----------------------------------+
-|                                   |
-|     Bottom 16:9 StandardFrame     |
-|    (3 rows x 6 columns grid)      |
-|                                   |
-+-----------------------------------+
++-------------------------------------------------------+
+|  [Header] Dynamic Weather Frog Title Hero             |
+|           (sensor.airdrie_summary + weather art)      |
++-------------------------------------------------------+
+|  [Upper 65%] Primary Smart Home Telemetry &          |
+|              Financial Portfolio Assets               |
+|  [Upper 65%] DevOps Build Vitals & Server Health      |
++-------------------------------------------------------+
+|  ====== [Clock Divider] Real-Time Time & Date ======  |
++-------------------------------------------------------+
+|  [Middle] Shared Reminders, Notes & Music Now Playing |
++-------------------------------------------------------+
+|  [Lower 35%] Comic & Botanical Art Carousel           |
+|              (r/comics top highlights)                |
++-------------------------------------------------------+
 ```
 
 ---
 
-## Atomic Design Mapping & Domain-Specific Extensions
+## Data Sources & API Endpoints
 
-Our system adapts Brad Frost's **Atomic Design** framework into a domain-specific hierarchy tailored for embedded dashboard displays:
+### 1. Weather Frog Hero & Personal Telemetry (`/api/personal`)
+- **Entities / Sources**: `sensor.airdrie_summary` (Home Assistant weather summary entity), OpenWeatherMap, CalDAV, Spotify API.
+- **Payload**:
+  ```json
+  {
+    "status": "success",
+    "data": {
+      "weather": {
+        "temp": 72,
+        "condition": "Partly Sunny & Warm",
+        "summary": "Soft afternoon breeze with gentle sunbeams, ideal for an evening stroll.",
+        "sensorEntity": "sensor.airdrie_summary"
+      },
+      "reminders": [
+        { "id": "1", "text": "Sunset walk at Botanical Garden", "time": "6:30 PM", "completed": false }
+      ]
+    }
+  }
+  ```
 
-### 1. Atoms (`src/components/atoms/`)
-Indivisible UI primitives with zero external dependency or layout assumptions:
-- **Typography**: Headings, labels, and metric numbers.
-- **Badge**: Status indicators (online, offline, pending).
-- **Card**: Standardized background container with dark border styling.
-- **Spinner**: SVG loading indicator for asynchronous data state.
+### 2. Home Assistant Telemetry (`/api/home-assistant`)
+- **Entities / Sources**: Home Assistant climate & lighting states.
 
-### 2. Molecules (`src/components/molecules/`)
-Combinations of two or more atoms forming functional UI units:
-- **MetricCard**: Combines typography, label, trend indicator, and background card.
-- **Sparkline**: SVG line chart visualizing financial or performance data trends over time.
-- **StatusIndicator**: Combines badge and live status ping animation.
+### 3. Financial Portfolio Data (`/api/finance`)
+- **Entities / Sources**: Market ticker and portfolio metrics.
 
-### 3. Organisms (`src/components/organisms/`)
-Domain-specific feature widgets handling client-side state and async data fetching:
-- **`FinanceWidget.tsx`**: Stock ticker trends, portfolio performance, and market status.
-- **`HomeAssistantWidget.tsx`**: Smart home device states, climate telemetry, and light controls.
-- **`WorkPerformanceWidget.tsx`**: CI/CD pipeline stats, task completion velocity, and server health.
-
-### 4. Templates (`src/components/templates/`)
-Universal structural layouts enforcing strict geometric constraints and widget encapsulations:
-- **`StandardFrame.tsx`**: Page layout container enforcing `aspect-video` (16:9) aspect ratio and a 6-column by 3-row CSS Grid layout for child widgets.
-- **`StandardWidget.tsx`**: Universal widget container wrapper accepting `title`, `size` presets (`small` 1x1, `medium` 2x1, `large` 2x2, `xlarge` 3x3), and `loading` props. Renders a skeleton UI during async data resolution.
-- **`ClockDivider.tsx`**: Real-time 12-hour clock divider positioned between the top and bottom frames, featuring minute-aligned timeout updates (`ceilingMinutes`) and subtle CSS pulsing animations.
-
-### 5. Layouts (`src/components/layout/`)
-- **`DashboardPage.tsx`**: Root display layout composing the top frame, clock divider, and bottom frame within a strictly constrained 9:16 aspect ratio container.
-
----
-
-## Data Pipeline Architecture
-
-```
-Route Handler (API)  <--- 2000ms delay --->  Client Widget ("use client")
-src/app/api/.../route.ts                     StandardWidget Skeleton -> Data View
-```
-
-1. **Async Route Handlers**: Next.js App Router API routes (`src/app/api/.../route.ts`) simulate real-world backend microservice latency using an artificial 2,000ms `setTimeout`.
-2. **Client Components**: Feature widgets use React client state (`useEffect` / `fetch`) to request data from the API endpoints.
-3. **Skeleton Loading**: During the initial 2,000ms resolution window, `StandardWidget` renders a built-in skeleton state to prevent cumulative layout shift (CLS) and ensure a polished user experience on kiosk screens.
+### 4. Work Performance & Server Vitals (`/api/work-performance`)
+- **Entities / Sources**: Datadog API & CI pipeline metrics.

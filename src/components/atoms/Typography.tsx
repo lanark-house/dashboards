@@ -11,14 +11,14 @@ export const Typography: React.FC<TypographyProps> = ({
   children,
   className = "",
 }) => {
-  const baseStyles = "text-slate-100 font-sans tracking-tight";
+  const baseStyles = "text-[#2C3531] tracking-normal";
   const variants = {
-    h1: "text-2xl font-bold uppercase text-slate-100 tracking-wider",
-    h2: "text-xl font-semibold text-slate-200",
-    h3: "text-base font-medium text-slate-300",
-    body: "text-sm text-slate-300 font-normal",
-    caption: "text-xs text-slate-400 font-medium uppercase tracking-widest",
-    metric: "text-3xl font-extrabold text-white tracking-tight tabular-nums",
+    h1: "font-serif-display text-4xl font-normal text-[#2C3531] tracking-tight",
+    h2: "font-serif-display text-2xl font-semibold text-[#2C3531]",
+    h3: "font-sans text-lg font-medium text-[#7A8B7B]",
+    body: "font-sans text-base text-[#2C3531] font-normal leading-relaxed",
+    caption: "font-sans text-xs font-semibold text-[#7A8B7B] uppercase tracking-widest",
+    metric: "font-serif-display text-4xl font-semibold text-[#C86D51] tracking-tight tabular-nums",
   };
 
   return <p className={`${baseStyles} ${variants[variant]} ${className}`}>{children}</p>;
