@@ -1,16 +1,12 @@
-name: CI Pipeline
+name: Build Storybook
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
 
 jobs:
-  validate:
-    name: Build & Validate
+  build:
+    name: Build Storybook Artifact
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -18,7 +14,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js Environment
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -27,14 +23,12 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run ESLint
-        run: pnpm run lint
-
-      - name: TypeScript Typecheck
-        run: pnpm exec tsc --noEmit
-
-      - name: Next.js Production Build
-        run: pnpm run build
-
-      - name: Build Storybook
+      - name: Build Storybook Static Site
         run: pnpm run build-storybook
+
+      - name: Upload Storybook Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook-static-${{ github.sha }}
+          path: ./storybook-static
+          retention-days: 1

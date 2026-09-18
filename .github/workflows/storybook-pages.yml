@@ -1,0 +1,43 @@
+name: Deploy Storybook to GitHub Pages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Storybook to GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Storybook Artifact
+        uses: dawidd6/action-download-artifact@v9
+        with:
+          workflow: storybook-build.yml
+          commit: ${{ github.sha }}
+          name: storybook-static-${{ github.sha }}
+          path: ./storybook-static
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./storybook-static
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
