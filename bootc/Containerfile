@@ -1,0 +1,31 @@
+FROM quay.io/centos-bootc/centos-bootc:stream9
+
+WORKDIR /opt/dashboard
+
+# Copy repository files
+COPY . /opt/dashboard/
+
+# Install system dependencies, Node.js packages, build application, set up scripts and systemd services
+RUN dnf -y install epel-release && \
+    dnf -y install \
+      nodejs \
+      npm \
+      chromium \
+      xorg-x11-server-Xorg \
+      xorg-x11-xinit \
+      unclutter \
+      google-noto-sans-fonts \
+      dejavu-sans-fonts \
+    && dnf clean all && \
+    if [ ! -f /usr/bin/chromium-browser ] && [ -f /usr/bin/chromium ]; then \
+      ln -s /usr/bin/chromium /usr/bin/chromium-browser; \
+    fi && \
+    npm install -g pnpm@10.30.3 && \
+    pnpm install --frozen-lockfile && \
+    pnpm run build && \
+    mkdir -p /opt/dashboard/scripts && \
+    cp /opt/dashboard/bootc/scripts/launch-kiosk.sh /opt/dashboard/scripts/launch-kiosk.sh && \
+    chmod +x /opt/dashboard/scripts/launch-kiosk.sh && \
+    cp /opt/dashboard/bootc/systemd/dashboard-nextjs.service /etc/systemd/system/dashboard-nextjs.service && \
+    cp /opt/dashboard/bootc/systemd/kiosk.service /etc/systemd/system/kiosk.service && \
+    systemctl enable dashboard-nextjs.service kiosk.service

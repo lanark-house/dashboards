@@ -1,0 +1,15 @@
+[Unit]
+Description=Chromium Kiosk Service
+After=dashboard-nextjs.service
+Wants=dashboard-nextjs.service
+
+[Service]
+Type=simple
+User=root
+Environment=DISPLAY=:0
+ExecStart=/usr/bin/xinit /opt/dashboard/scripts/launch-kiosk.sh -- :0 vt7
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target
