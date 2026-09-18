@@ -1,0 +1,52 @@
+# Stage 1: Build the Next.js application
+FROM node:20-slim AS builder
+
+WORKDIR /app
+
+# Copy package management files
+COPY package.json pnpm-lock.yaml ./
+
+# Install dependencies and build Next.js application
+RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+RUN pnpm run build
+
+# Stage 2: Target Rocky Linux / CentOS Stream bootc system image
+FROM quay.io/centos-bootc/centos-bootc:stream9
+
+# Install Node.js LTS runtime, Chromium browser, X11 server, unclutter, and essential fonts
+RUN dnf -y install epel-release && \
+    dnf -y install \
+      nodejs \
+      npm \
+      chromium \
+      xorg-x11-server-Xorg \
+      xorg-x11-xinit \
+      unclutter \
+      google-noto-sans-fonts \
+      dejavu-sans-fonts \
+    && dnf clean all
+
+# Ensure chromium-browser binary link exists
+RUN if [ ! -f /usr/bin/chromium-browser ] && [ -f /usr/bin/chromium ]; then \
+      ln -s /usr/bin/chromium /usr/bin/chromium-browser; \
+    fi
+
+WORKDIR /opt/dashboard
+
+# Copy pre-built Next.js production assets and node_modules from stage 1
+COPY --from=builder /app/.next /opt/dashboard/.next
+COPY --from=builder /app/public /opt/dashboard/public
+COPY --from=builder /app/package.json /opt/dashboard/package.json
+COPY --from=builder /app/node_modules /opt/dashboard/node_modules
+
+# Copy kiosk launch script and set executable permissions
+COPY bootc/scripts/launch-kiosk.sh /opt/dashboard/scripts/launch-kiosk.sh
+RUN chmod +x /opt/dashboard/scripts/launch-kiosk.sh
+
+# Copy systemd unit files and enable them
+COPY bootc/systemd/dashboard-nextjs.service /etc/systemd/system/dashboard-nextjs.service
+COPY bootc/systemd/kiosk.service /etc/systemd/system/kiosk.service
+RUN systemctl enable dashboard-nextjs.service kiosk.service

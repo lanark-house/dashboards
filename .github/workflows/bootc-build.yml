@@ -1,0 +1,43 @@
+name: Build bootc Image
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-bootc:
+    name: Build bootc Container & Disk Artifact
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build OCI Container Image
+        run: |
+          podman build -f bootc/Containerfile -t dashboard-bootc:latest .
+
+      - name: Prepare Disk Image Output Directory
+        run: |
+          mkdir -p output
+
+      - name: Build Bootable Disk Image via bootc-image-builder
+        run: |
+          podman run \
+            --rm \
+            --privileged \
+            --security-opt label=type:unconfined_t \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
+            -v $(pwd)/output:/output \
+            quay.io/bootc/bootc-image-builder:latest \
+            --type qcow2 \
+            --local \
+            dashboard-bootc:latest
+
+      - name: Upload Disk Image Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-bootc-qcow2
+          path: output/qcow2/disk.qcow2

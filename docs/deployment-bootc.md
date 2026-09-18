@@ -2,82 +2,79 @@
 
 ## Architecture Context
 
-This document details deployment of the 9:16 Vertical Dashboard Framework inside an immutable **Rocky Linux `bootc`** container image configured for auto-starting Chromium in full kiosk mode.
+This document details deployment of the 9:16 Vertical Dashboard Framework inside an immutable **Rocky Linux / CentOS Stream `bootc`** container image configured for auto-starting Chromium in full kiosk mode.
 
 ---
 
-## Container Build (`Containerfile` / `Dockerfile`)
+## File Structure
 
-```dockerfile
-FROM quay.io/rockylinux/bootc:9
+The `bootc` environment and kiosk orchestration files are organized as follows:
 
-# Install Node.js runtime, Chromium browser, and X11 display server environment
-RUN dnf -y install \
-    nodejs \
-    pnpm \
-    chromium \
-    xorg-x11-server-Xorg \
-    xorg-x11-xinit \
-    matchbox-window-manager \
-    systemd \
-    && dnf clean all
-
-# Copy built application assets
-WORKDIR /opt/dashboard
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod
-COPY . .
-RUN pnpm build
-
-# Enable Systemd services
-COPY systemd/kiosk-dashboard.service /etc/systemd/system/
-COPY systemd/kiosk-browser.service /etc/systemd/system/
-RUN systemctl enable kiosk-dashboard.service kiosk-browser.service
+```text
+.
+├── .github/
+│   └── workflows/
+│       └── bootc-build.yml
+├── docs/
+│   └── deployment-bootc.md
+├── bootc/
+│   ├── Containerfile
+│   ├── systemd/
+│   │   ├── dashboard-nextjs.service
+│   │   └── kiosk.service
+│   └── scripts/
+│       └── launch-kiosk.sh
 ```
 
 ---
 
-## Chromium Kiosk Configuration
+## Container Build (`bootc/Containerfile`)
 
-To ensure uninterrupted rendering without browser chrome, popups, or update prompts, Chromium is executed with the following strict arguments:
+The `bootc/Containerfile` uses a multi-stage build pattern:
+1. Builds the Next.js production build (`.next`, `public`, `package.json`, `node_modules`).
+2. Packages Node.js LTS, Chromium, X11 display server, unclutter, and essential fonts onto a `bootc`-compatible base image (`quay.io/centos-bootc/centos-bootc:stream9`).
+3. Installs and enables systemd service definitions to orchestrate boot behavior.
+
+---
+
+## Chromium Kiosk Configuration (`bootc/scripts/launch-kiosk.sh`)
+
+To ensure uninterrupted rendering without browser UI noise, popups, or update prompts in a 9:16 portrait display (1080x1920), Chromium is launched via `/opt/dashboard/scripts/launch-kiosk.sh`:
 
 ```bash
-/usr/bin/chromium-browser \
+#!/bin/bash
+
+# Hide mouse cursor activity
+unclutter -idle 0.1 -root &
+
+# Launch Chromium in kiosk mode
+chromium-browser \
   --kiosk \
   --no-first-run \
-  --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' \
-  --disable-notifications \
+  --no-errdialogs \
   --disable-infobars \
   --disable-session-crashed-bubble \
-  --disable-component-update \
-  --noerrdialogs \
-  --autoplay-policy=no-user-gesture-required \
+  --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' \
   --window-size=1080,1920 \
   --window-position=0,0 \
   http://localhost:3000
 ```
 
-### Key Arguments Explained:
-- `--kiosk`: Runs Chromium in full-screen kiosk mode, suppressing address bar, window controls, and tab bars.
-- `--no-first-run`: Bypasses welcome screens, default browser setup dialogs, and sync prompts.
-- `--simulate-outdated-no-au`: Suppresses the "Chromium is out of date" infobar prompt until year 2099.
-- `--disable-session-crashed-bubble`: Prevents crash restore banners after ungraceful power cycles on kiosk hardware.
-
 ---
 
 ## Systemd Service Management
 
-### 1. Dashboard Application Service (`/etc/systemd/system/kiosk-dashboard.service`)
+### 1. Next.js Application Service (`/etc/systemd/system/dashboard-nextjs.service`)
 ```ini
 [Unit]
-Description=9:16 Dashboard Next.js Application Server
+Description=Dashboard Next.js Service
 After=network.target
 
 [Service]
 Type=simple
 User=root
 WorkingDirectory=/opt/dashboard
-ExecStart=/usr/bin/pnpm start
+ExecStart=/usr/bin/npm run start
 Restart=always
 RestartSec=3
 
@@ -85,18 +82,18 @@ RestartSec=3
 WantedBy=multi-user.target
 ```
 
-### 2. Kiosk Browser Service (`/etc/systemd/system/kiosk-browser.service`)
+### 2. Kiosk Browser Service (`/etc/systemd/system/kiosk.service`)
 ```ini
 [Unit]
-Description=Chromium Kiosk Browser Launch
-After=kiosk-dashboard.service
-Wants=kiosk-dashboard.service
+Description=Chromium Kiosk Service
+After=dashboard-nextjs.service
+Wants=dashboard-nextjs.service
 
 [Service]
 Type=simple
 User=root
 Environment=DISPLAY=:0
-ExecStart=/usr/bin/xinit /usr/bin/chromium-browser --kiosk --no-first-run --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT' http://localhost:3000 -- :0 vt7
+ExecStart=/usr/bin/xinit /opt/dashboard/scripts/launch-kiosk.sh -- :0 vt7
 Restart=always
 RestartSec=5
 
@@ -106,19 +103,20 @@ WantedBy=graphical.target
 
 ---
 
-## Rocky Linux `bootc` Deployment Steps
+## CI/CD Workflow (`.github/workflows/bootc-build.yml`)
+
+The GitHub Actions workflow automates container compilation and raw/qcow2 disk image generation via `bootc-image-builder`:
 
 1. **Build Container Image**:
    ```bash
-   podman build -t registry.example.com/kiosk/dashboard:latest .
+   podman build -f bootc/Containerfile -t dashboard-bootc:latest .
    ```
 
-2. **Deploy to Target System**:
+2. **Generate Disk Image (`.qcow2`)**:
    ```bash
-   bootc switch registry.example.com/kiosk/dashboard:latest
-   ```
-
-3. **Reboot Kiosk Target**:
-   ```bash
-   systemctl reboot
+   podman run --rm --privileged \
+     -v /var/lib/containers/storage:/var/lib/containers/storage \
+     -v $(pwd)/output:/output \
+     quay.io/bootc/bootc-image-builder:latest \
+     --type qcow2 --local dashboard-bootc:latest
    ```
