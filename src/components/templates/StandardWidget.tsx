@@ -22,10 +22,34 @@ export const StandardWidget: React.FC<StandardWidgetProps> = ({
   className = "",
 }) => {
   const sizeStyles: Record<WidgetSize, React.CSSProperties> = {
-    small: { gridColumn: "span 1 / span 1", gridRow: "span 1 / span 1" },
-    medium: { gridColumn: "span 2 / span 2", gridRow: "span 1 / span 1" },
-    large: { gridColumn: "span 2 / span 2", gridRow: "span 2 / span 2" },
-    xlarge: { gridColumn: "span 3 / span 3", gridRow: "span 3 / span 3" },
+    small: {
+      gridColumn: "span 1 / span 1",
+      gridRow: "span 1 / span 1",
+      width: "100%",
+      minWidth: "200px",
+      minHeight: "140px",
+    },
+    medium: {
+      gridColumn: "span 2 / span 2",
+      gridRow: "span 1 / span 1",
+      width: "100%",
+      minWidth: "360px",
+      minHeight: "140px",
+    },
+    large: {
+      gridColumn: "span 2 / span 2",
+      gridRow: "span 2 / span 2",
+      width: "100%",
+      minWidth: "360px",
+      minHeight: "280px",
+    },
+    xlarge: {
+      gridColumn: "span 3 / span 3",
+      gridRow: "span 3 / span 3",
+      width: "100%",
+      minWidth: "540px",
+      minHeight: "420px",
+    },
   };
 
   return (
@@ -52,7 +76,7 @@ export const StandardWidget: React.FC<StandardWidgetProps> = ({
           alignItems: "center",
           justifyContent: "space-between",
           paddingBottom: "0.5rem",
-          borderBottom: "1px stroke rgba(122, 139, 123, 0.2)",
+          borderBottom: "1px solid rgba(122, 139, 123, 0.2)",
           marginBottom: "0.5rem",
         }}
       >
