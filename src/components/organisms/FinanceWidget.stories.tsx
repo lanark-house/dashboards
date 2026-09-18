@@ -13,6 +13,9 @@ const meta: Meta<typeof FinanceWidget> = {
       control: 'select',
       options: ['small', 'medium', 'large', 'xlarge'],
     },
+    isLoading: {
+      control: 'boolean',
+    },
   },
 };
 
@@ -40,5 +43,25 @@ export const Large: Story = {
 export const XLarge: Story = {
   args: {
     size: 'xlarge',
+  },
+};
+
+export const Loading: Story = {
+  args: {
+    size: 'medium',
+    isLoading: true,
+  },
+};
+
+export const CustomData: Story = {
+  args: {
+    size: 'large',
+    data: {
+      portfolioValue: 250000,
+      dayChange: -1850,
+      dayChangePercent: -0.74,
+      marketStatus: 'OFFLINE',
+      sparkline: [252000, 251500, 251000, 250800, 250200, 250000],
+    },
   },
 };

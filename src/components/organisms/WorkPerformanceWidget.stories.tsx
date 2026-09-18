@@ -13,6 +13,9 @@ const meta: Meta<typeof WorkPerformanceWidget> = {
       control: 'select',
       options: ['small', 'medium', 'large', 'xlarge'],
     },
+    isLoading: {
+      control: 'boolean',
+    },
   },
 };
 
@@ -40,5 +43,28 @@ export const Large: Story = {
 export const XLarge: Story = {
   args: {
     size: 'xlarge',
+  },
+};
+
+export const Loading: Story = {
+  args: {
+    size: 'medium',
+    isLoading: true,
+  },
+};
+
+export const CustomData: Story = {
+  args: {
+    size: 'large',
+    data: {
+      openPRs: 5,
+      ciSuccessRate: 100,
+      buildStatus: 'PASSING',
+      commitsToday: 28,
+      serverHealth: {
+        cpuUsage: 45,
+        memoryUsage: 68,
+      },
+    },
   },
 };
