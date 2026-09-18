@@ -1,0 +1,19 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: vertical-dashboard-framework
+  description: 9:16 Vertical Dashboard Framework & Next.js Architecture for Rocky Linux bootc kiosk environment.
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+  tags:
+    - nextjs
+    - typescript
+    - tailwindcss
+    - kiosk
+    - bootc
+    - atomic-design
+spec:
+  type: service
+  lifecycle: production
+  owner: dashboard-team
+  system: kiosk-infrastructure
