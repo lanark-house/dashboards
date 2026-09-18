@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { StandardWidget, WidgetSize } from "../templates/StandardWidget";
 import { Typography } from "../atoms/Typography";
 import { Badge } from "../atoms/Badge";
+import { CloverIcon } from "../atoms/CloverIcon";
 
 interface HomeAssistantData {
   temperature: number;
@@ -31,29 +32,27 @@ export const HomeAssistantWidget: React.FC<{ size?: WidgetSize }> = ({
   }, []);
 
   return (
-    <StandardWidget title="Home Assistant" size={size} loading={loading}>
+    <StandardWidget title="Home Telemetry" size={size} loading={loading} icon={<CloverIcon className="w-4 h-4 text-[#8EA483]" />}>
       {data && (
-        <div className="flex flex-col justify-between h-full gap-1 overflow-hidden">
-          <div className="flex items-center justify-between gap-1">
+        <div className="flex flex-col justify-between h-full gap-2 p-1 overflow-hidden">
+          <div className="flex items-center justify-between">
             <div>
-              <Typography variant="caption">Climate</Typography>
-              <div className="text-xl font-bold text-white leading-none mt-0.5">
+              <Typography variant="caption">Indoor Climate</Typography>
+              <div className="font-serif-display text-4xl font-semibold text-[#2C3531] mt-0.5">
                 {data.temperature}°F
               </div>
-              <div className="text-[10px] text-slate-400 truncate mt-0.5">
-                {data.weatherCondition}
+              <div className="font-sans text-xs text-[#7A8B7B] mt-0.5">
+                Humidity: {data.humidity}%
               </div>
             </div>
-            <Badge label="ARMED" variant="success" />
+            <Badge label={data.securityStatus} variant="success" />
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-slate-300 bg-slate-800/40 p-1.5 rounded-lg">
+          <div className="flex items-center justify-between font-sans text-xs text-[#2C3531] bg-[#F5F2EB]/90 p-2.5 rounded-xl border border-[#7A8B7B]/20">
             <span>
-              Lights: <strong className="text-indigo-400">{data.activeLightsCount}/{data.totalLightsCount}</strong>
+              Active Lighting: <strong className="text-[#C86D51]">{data.activeLightsCount} of {data.totalLightsCount}</strong>
             </span>
-            <span>
-              Hum: <strong className="text-sky-400">{data.humidity}%</strong>
-            </span>
+            <span className="text-[#5C6F5D] font-medium">Warm Preset</span>
           </div>
         </div>
       )}

@@ -16,10 +16,12 @@ export async function GET() {
         high: 76,
         low: 62,
         condition: "Partly Sunny & Warm",
+        summary: "Soft afternoon breeze with gentle sunbeams, ideal for an evening stroll.",
         location: "Home Sanctuary",
+        sensorEntity: "sensor.airdrie_summary",
       },
       reminders: [
-        { id: "1", text: "Sunset walk at the Botanical Garden", time: "6:30 PM", completed: false },
+        { id: "1", text: "Sunset walk at Botanical Garden", time: "6:30 PM", completed: false },
         { id: "2", text: "Pick up fresh dinner ingredients", time: "7:45 PM", completed: true },
         { id: "3", text: "Anniversary weekend booking", time: "Tomorrow", completed: false },
       ],
