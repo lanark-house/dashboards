@@ -1,19 +1,19 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: vertical-dashboard-framework
-  description: 9:16 Vertical Dashboard Framework & Next.js Architecture for Rocky Linux bootc kiosk environment.
+  name: bootc-dashboard-bootstrap
+  description: Foundational early GitOps bootc base image configuration and automated build pipeline for host bootstrapping.
   annotations:
     backstage.io/techdocs-ref: dir:.
   tags:
-    - nextjs
-    - typescript
-    - tailwindcss
-    - kiosk
     - bootc
-    - atomic-design
+    - gitops
+    - centos-stream
+    - kiosk
+    - infrastructure
 spec:
   type: service
   lifecycle: production
-  owner: dashboard-team
+  owner: lanark-house
+  domain: lanark-house
   system: kiosk-infrastructure
