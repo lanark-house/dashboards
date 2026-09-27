@@ -1,25 +1,49 @@
 # Contributing Guidelines
 
-Thank you for contributing to the 9:16 Vertical Dashboard Framework!
+Thank you for contributing to the Bootc Base Infrastructure and Dashboard Framework!
 
-## Getting Started
+---
 
-1. Ensure Node.js (v20+) and `pnpm` are installed.
-2. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-3. Run the local development server:
-   ```bash
-   pnpm dev
-   ```
+## Local Development & Container Validation
 
-## Development Workflow
+### 1. Prerequisites
+- Node.js (v20+) & `pnpm`
+- Podman or Docker with Buildx enabled
 
-1. Create a feature branch for your changes.
-2. Ensure code passes TypeScript validation, ESLint checks, and production builds:
-   ```bash
-   pnpm run build
-   ```
-3. Follow the atomic design principles outlined in `STYLE_GUIDE.md`.
-4. Open a pull request against the `main` branch.
+### 2. Validating Containerfile Build Locally
+
+To test the `Containerfile` locally with Podman:
+
+```bash
+# Build base image locally
+podman build -t bootc-dashboard-bootstrap:local -f Containerfile .
+```
+
+To test multi-architecture builds using Docker Buildx:
+
+```bash
+docker buildx build --platform linux/amd64,linux/arm64 -f Containerfile .
+```
+
+### 3. Application Development Workflow
+
+```bash
+# Install dependencies
+pnpm install
+
+# Run TypeScript & Linter validation
+pnpm run lint
+pnpm exec tsc --noEmit
+
+# Build production assets
+pnpm run build
+```
+
+---
+
+## PR Submission & Guidelines
+
+1. **Commit Messages**: Follow Conventional Commits format (e.g., `feat: ...`, `fix: ...`, `docs: ...`, `ci: ...`).
+2. **Branch Naming**: Use descriptive branch names (`feature/`, `fix/`, `chore/`).
+3. **Multi-Arch Compliance**: Ensure changes to `Containerfile` build successfully across both `linux/amd64` and `linux/arm64` targets.
+4. **Action SHA Pinning**: Any updates to GitHub Actions workflow files must exact-pin third-party actions to full commit SHAs with version comments.
