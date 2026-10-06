@@ -13,11 +13,18 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Build OCI Container Image
+        env:
+          WIFI_SSID: ${{ secrets.WIFI_SSID }}
+          WIFI_PASSWORD: ${{ secrets.WIFI_PASSWORD }}
         run: |
-          podman build -f bootc/Containerfile -t dashboard-bootc:latest .
+          podman build \
+            --build-arg WIFI_SSID="$WIFI_SSID" \
+            --build-arg WIFI_PASSWORD="$WIFI_PASSWORD" \
+            -f bootc/Containerfile \
+            -t dashboard-bootc:latest .
 
       - name: Prepare Disk Image Output Directory
         run: |
@@ -37,7 +44,7 @@ jobs:
             dashboard-bootc:latest
 
       - name: Upload Disk Image Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b4f157630b939161f5b12d20738d761b103e5d41 # v4.4.3
         with:
           name: dashboard-bootc-qcow2
           path: output/qcow2/disk.qcow2

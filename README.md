@@ -27,7 +27,16 @@ You can build the base image locally using Podman or Docker:
 ```bash
 # Build multi-arch or single arch locally with Podman
 podman build -t ghcr.io/lanark-house/dashboards:latest -f Containerfile .
+
+# Build dashboard bootc image with optional Wi-Fi credential build arguments
+podman build \
+  --build-arg WIFI_SSID="YourNetworkName" \
+  --build-arg WIFI_PASSWORD="YourNetworkPassword" \
+  -f bootc/Containerfile \
+  -t dashboard-bootc:latest .
 ```
+
+When `WIFI_SSID` is provided during build, a NetworkManager connection keyfile is constructed at `/etc/NetworkManager/system-connections/wifi.nmconnection` with 802-11-wireless and WPA-PSK settings and strict `0600` permissions owned by `root:root`.
 
 ### 2. Flashing & Installing via `bootc install`
 
@@ -52,6 +61,8 @@ podman run \
   --local \
   ghcr.io/lanark-house/dashboards:latest
 ```
+
+The automated GitHub Actions workflow (`.github/workflows/bootc-build.yml`) builds the bootc image using repository secrets `WIFI_SSID` and `WIFI_PASSWORD`, builds the `.qcow2` disk image, and uploads `output/qcow2/disk.qcow2` as a workflow artifact (`dashboard-bootc-qcow2`) via `actions/upload-artifact@v4`.
 
 ### 3. Remote Administration & SSH Access
 

@@ -34,6 +34,7 @@ The `bootc/Containerfile` uses a multi-stage build pattern:
 1. Builds the Next.js production build (`.next`, `public`, `package.json`, `node_modules`).
 2. Packages Node.js LTS, Chromium, X11 display server, unclutter, and essential fonts onto a `bootc`-compatible base image (`quay.io/centos-bootc/centos-bootc:stream9`).
 3. Installs and enables systemd service definitions to orchestrate boot behavior.
+4. Supports optional Wi-Fi credential build arguments (`WIFI_SSID` and `WIFI_PASSWORD` or `WIFI_PSK`). When `WIFI_SSID` is supplied at build time, a NetworkManager keyfile is automatically generated at `/etc/NetworkManager/system-connections/wifi.nmconnection` with `802-11-wireless` and `wpa-psk` parameters and strict `0600` permissions owned by `root:root`.
 
 ---
 
@@ -108,9 +109,19 @@ WantedBy=graphical.target
 The GitHub Actions workflow automates container compilation and raw/qcow2 disk image generation via `bootc-image-builder`:
 
 1. **Build Container Image**:
-   ```bash
-   podman build -f bootc/Containerfile -t dashboard-bootc:latest .
+   ```yaml
+   - name: Build OCI Container Image
+     env:
+       WIFI_SSID: ${{ secrets.WIFI_SSID }}
+       WIFI_PASSWORD: ${{ secrets.WIFI_PASSWORD }}
+     run: |
+       podman build \
+         --build-arg WIFI_SSID="$WIFI_SSID" \
+         --build-arg WIFI_PASSWORD="$WIFI_PASSWORD" \
+         -f bootc/Containerfile \
+         -t dashboard-bootc:latest .
    ```
+   Requires GitHub Repository Secrets `WIFI_SSID` and `WIFI_PASSWORD` (if Wi-Fi auto-configuration is desired).
 
 2. **Generate Disk Image (`.qcow2`)**:
    ```bash
@@ -120,3 +131,6 @@ The GitHub Actions workflow automates container compilation and raw/qcow2 disk i
      quay.io/bootc/bootc-image-builder:latest \
      --type qcow2 --local dashboard-bootc:latest
    ```
+
+3. **Upload Disk Image Artifact**:
+   Uploads the generated qcow2 disk image (`output/qcow2/disk.qcow2`) as a workflow artifact named `dashboard-bootc-qcow2` using `actions/upload-artifact@v4`.
