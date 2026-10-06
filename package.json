@@ -34,7 +34,7 @@
     "@storybook/addon-docs": "^10.6.0",
     "@storybook/addon-mcp": "^10.6.0",
     "vite": "latest",
-    "eslint-plugin-storybook": "^10.6.0",
+    "eslint-plugin-storybook": "^10.6.1",
     "vitest": "latest",
     "playwright": "latest",
     "@vitest/browser-playwright": "latest",
