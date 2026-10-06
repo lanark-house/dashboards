@@ -13,6 +13,3 @@ updates:
     schedule:
       interval: "daily"
     target-branch: main
-    cooldown:
-      semver-patch-days: 7
-      
