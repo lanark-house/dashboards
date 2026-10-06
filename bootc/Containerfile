@@ -16,7 +16,11 @@ RUN pnpm run build
 # Stage 2: Target Rocky Linux / CentOS Stream bootc system image
 FROM quay.io/centos-bootc/centos-bootc:stream9
 
-# Install Node.js LTS runtime, Chromium browser, X11 server, unclutter, and essential fonts
+# Wi-Fi credential build arguments
+ARG WIFI_SSID=""
+ARG WIFI_PASSWORD=""
+
+# Install Node.js LTS runtime, Chromium browser, X11 server, unclutter, essential fonts, and NetworkManager Wi-Fi support
 RUN dnf -y install epel-release && \
     dnf -y install \
       nodejs \
@@ -27,6 +31,8 @@ RUN dnf -y install epel-release && \
       unclutter-xfixes \
       google-noto-sans-fonts \
       dejavu-sans-fonts \
+      NetworkManager-wifi \
+      wpa_supplicant \
     && dnf clean all
 
 # Ensure chromium-browser and unclutter binary links exist
@@ -35,6 +41,13 @@ RUN if [ ! -f /usr/bin/chromium-browser ] && [ -f /usr/bin/chromium ]; then \
     fi && \
     if [ ! -f /usr/bin/unclutter ] && [ -f /usr/bin/unclutter-xfixes ]; then \
       ln -s /usr/bin/unclutter-xfixes /usr/bin/unclutter; \
+    fi
+
+# Configure NetworkManager Wi-Fi connection if WIFI_SSID build argument is supplied
+RUN if [ -n "$WIFI_SSID" ]; then \
+      mkdir -p /etc/NetworkManager/system-connections/ && \
+      printf '[connection]\nid=wifi-connection\ntype=wifi\nautoconnect=true\n\n[wifi]\nmode=infrastructure\nssid=%s\n\n[wifi-security]\nkey-mgmt=wpa-psk\npsk=%s\n\n[ipv4]\nmethod=auto\n\n[ipv6]\nmethod=auto\n' "$WIFI_SSID" "$WIFI_PASSWORD" > /etc/NetworkManager/system-connections/wifi.nmconnection && \
+      chmod 0600 /etc/NetworkManager/system-connections/wifi.nmconnection ; \
     fi
 
 WORKDIR /opt/dashboard
