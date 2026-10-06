@@ -32,8 +32,9 @@ The `bootc` environment and kiosk orchestration files are organized as follows:
 
 The `bootc/Containerfile` uses a multi-stage build pattern:
 1. Builds the Next.js production build (`.next`, `public`, `package.json`, `node_modules`).
-2. Packages Node.js LTS, Chromium, X11 display server, unclutter, and essential fonts onto a `bootc`-compatible base image (`quay.io/centos-bootc/centos-bootc:stream9`).
-3. Installs and enables systemd service definitions to orchestrate boot behavior.
+2. Packages Node.js LTS, Chromium, X11 display server, unclutter, essential fonts, `NetworkManager-wifi`, and `wpa_supplicant` onto a `bootc`-compatible base image (`quay.io/centos-bootc/centos-bootc:stream9`).
+3. Accepts optional Wi-Fi credentials via `WIFI_SSID` and `WIFI_PASSWORD` build arguments (`ARG`), automatically creating a NetworkManager connection keyfile (`/etc/NetworkManager/system-connections/wifi.nmconnection` with `0600` permissions) when provided.
+4. Installs and enables systemd service definitions to orchestrate boot behavior.
 
 ---
 
@@ -109,14 +110,23 @@ The GitHub Actions workflow automates container compilation and raw/qcow2 disk i
 
 1. **Build Container Image**:
    ```bash
-   podman build -f bootc/Containerfile -t dashboard-bootc:latest .
+   podman build \
+     --build-arg WIFI_SSID="YourNetworkSSID" \
+     --build-arg WIFI_PASSWORD="YourNetworkPassword" \
+     -f bootc/Containerfile \
+     -t dashboard-bootc:latest .
    ```
 
 2. **Generate Disk Image (`.qcow2`)**:
    ```bash
    podman run --rm --privileged \
+     --security-opt label=type:unconfined_t \
      -v /var/lib/containers/storage:/var/lib/containers/storage \
      -v $(pwd)/output:/output \
      quay.io/bootc/bootc-image-builder:latest \
      --type qcow2 --local dashboard-bootc:latest
    ```
+
+3. **Artifact Upload**:
+   - The generated disk image (`output/qcow2/disk.qcow2`) is uploaded as a workflow run artifact (`dashboard-bootc-qcow2`) using `actions/upload-artifact@v4`.
+   - Wi-Fi credentials can be passed via GitHub Repository Secrets (`WIFI_SSID`, `WIFI_PASSWORD`) or as inputs when manually triggering `workflow_dispatch`.
