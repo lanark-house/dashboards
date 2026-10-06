@@ -53,3 +53,34 @@ RUN chmod +x /opt/dashboard/scripts/launch-kiosk.sh
 COPY bootc/systemd/dashboard-nextjs.service /etc/systemd/system/dashboard-nextjs.service
 COPY bootc/systemd/kiosk.service /etc/systemd/system/kiosk.service
 RUN systemctl enable dashboard-nextjs.service kiosk.service
+
+# Optional Wi-Fi credentials for automatic NetworkManager configuration
+ARG WIFI_SSID
+ARG WIFI_PASSWORD
+ARG WIFI_PSK
+
+RUN if [ -n "$WIFI_SSID" ]; then \
+      WIFI_PASS="${WIFI_PASSWORD:-$WIFI_PSK}" ; \
+      mkdir -p /etc/NetworkManager/system-connections && \
+      cat <<EOF > /etc/NetworkManager/system-connections/wifi.nmconnection
+[connection]
+id=wifi
+type=802-11-wireless
+
+[802-11-wireless]
+mode=infrastructure
+ssid=${WIFI_SSID}
+
+[802-11-wireless-security]
+key-mgmt=wpa-psk
+psk=${WIFI_PASS}
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=auto
+EOF
+      chmod 0600 /etc/NetworkManager/system-connections/wifi.nmconnection && \
+      chown root:root /etc/NetworkManager/system-connections/wifi.nmconnection ; \
+    fi
