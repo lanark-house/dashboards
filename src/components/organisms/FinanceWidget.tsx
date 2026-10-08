@@ -7,7 +7,7 @@ import { Sparkline } from "../molecules/Sparkline";
 import { StatusIndicator } from "../molecules/StatusIndicator";
 import { CloverIcon } from "../atoms/CloverIcon";
 
-interface FinanceData {
+export interface FinanceData {
   portfolioValue: number;
   dayChange: number;
   dayChangePercent: number;
@@ -15,22 +15,60 @@ interface FinanceData {
   sparkline: number[];
 }
 
-export const FinanceWidget: React.FC<{ size?: WidgetSize }> = ({ size = "medium" }) => {
-  const [data, setData] = useState<FinanceData | null>(null);
+const DEFAULT_FINANCE_DATA: FinanceData = {
+  portfolioValue: 142850,
+  dayChange: 1240,
+  dayChangePercent: 0.87,
+  marketStatus: "OPEN",
+  sparkline: [141200, 141500, 141800, 142100, 142000, 142500, 142850],
+};
+
+export interface FinanceWidgetProps {
+  size?: WidgetSize;
+  data?: FinanceData;
+  isLoading?: boolean;
+}
+
+export const FinanceWidget: React.FC<FinanceWidgetProps> = ({
+  size = "medium",
+  data: propData,
+  isLoading: propLoading,
+}) => {
+  const [fetchedData, setFetchedData] = useState<FinanceData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const data = propData ?? fetchedData;
+  const effectiveLoading = propLoading ?? (propData ? false : loading);
+
   useEffect(() => {
+    if (propData !== undefined) return;
+
+    let isMounted = true;
     fetch("/api/finance")
-      .then((res) => res.json())
-      .then((json) => {
-        setData(json.data);
-        setLoading(false);
+      .then((res) => {
+        if (!res.ok) throw new Error("Fetch failed");
+        return res.json();
       })
-      .catch(() => setLoading(false));
-  }, []);
+      .then((json) => {
+        if (isMounted) {
+          setFetchedData(json.data ?? DEFAULT_FINANCE_DATA);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setFetchedData(DEFAULT_FINANCE_DATA);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [propData]);
 
   return (
-    <StandardWidget title="Finance & Assets" size={size} loading={loading} icon={<CloverIcon className="w-4 h-4 text-[#8EA483]" />}>
+    <StandardWidget title="Finance & Assets" size={size} loading={effectiveLoading} icon={<CloverIcon className="w-4 h-4 text-[#8EA483]" />}>
       {data && (
         <div className="flex flex-col justify-between h-full gap-2 p-1">
           <div className="flex items-center justify-between">
