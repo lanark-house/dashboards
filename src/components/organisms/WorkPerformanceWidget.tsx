@@ -5,7 +5,7 @@ import { StandardWidget, WidgetSize } from "../templates/StandardWidget";
 import { Badge } from "../atoms/Badge";
 import { CloverIcon } from "../atoms/CloverIcon";
 
-interface WorkPerformanceData {
+export interface WorkPerformanceData {
   openPRs: number;
   ciSuccessRate: number;
   buildStatus: "PASSING" | "FAILING";
@@ -16,24 +16,63 @@ interface WorkPerformanceData {
   };
 }
 
-export const WorkPerformanceWidget: React.FC<{ size?: WidgetSize }> = ({
+const DEFAULT_WORK_PERFORMANCE_DATA: WorkPerformanceData = {
+  openPRs: 2,
+  ciSuccessRate: 99.4,
+  buildStatus: "PASSING",
+  commitsToday: 14,
+  serverHealth: {
+    cpuUsage: 18,
+    memoryUsage: 42,
+  },
+};
+
+export interface WorkPerformanceWidgetProps {
+  size?: WidgetSize;
+  data?: WorkPerformanceData;
+  isLoading?: boolean;
+}
+
+export const WorkPerformanceWidget: React.FC<WorkPerformanceWidgetProps> = ({
   size = "medium",
+  data: propData,
+  isLoading: propLoading,
 }) => {
-  const [data, setData] = useState<WorkPerformanceData | null>(null);
+  const [fetchedData, setFetchedData] = useState<WorkPerformanceData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const data = propData ?? fetchedData;
+  const effectiveLoading = propLoading ?? (propData ? false : loading);
+
   useEffect(() => {
+    if (propData !== undefined) return;
+
+    let isMounted = true;
     fetch("/api/work-performance")
-      .then((res) => res.json())
-      .then((json) => {
-        setData(json.data);
-        setLoading(false);
+      .then((res) => {
+        if (!res.ok) throw new Error("Fetch failed");
+        return res.json();
       })
-      .catch(() => setLoading(false));
-  }, []);
+      .then((json) => {
+        if (isMounted) {
+          setFetchedData(json.data ?? DEFAULT_WORK_PERFORMANCE_DATA);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setFetchedData(DEFAULT_WORK_PERFORMANCE_DATA);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [propData]);
 
   return (
-    <StandardWidget title="DevOps & Server Vitals" size={size} loading={loading} icon={<CloverIcon className="w-4 h-4 text-[#8EA483]" />}>
+    <StandardWidget title="DevOps & Server Vitals" size={size} loading={effectiveLoading} icon={<CloverIcon className="w-4 h-4 text-[#8EA483]" />}>
       {data && (
         <div className="flex items-center justify-between h-full px-2 gap-4">
           <div>

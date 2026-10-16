@@ -6,7 +6,7 @@ import { Typography } from "../atoms/Typography";
 import { Badge } from "../atoms/Badge";
 import { CloverIcon } from "../atoms/CloverIcon";
 
-interface HomeAssistantData {
+export interface HomeAssistantData {
   temperature: number;
   humidity: number;
   weatherCondition: string;
@@ -15,24 +15,61 @@ interface HomeAssistantData {
   securityStatus: string;
 }
 
-export const HomeAssistantWidget: React.FC<{ size?: WidgetSize }> = ({
+const DEFAULT_HOME_ASSISTANT_DATA: HomeAssistantData = {
+  temperature: 72,
+  humidity: 45,
+  weatherCondition: "Clear & Soft Sunlight",
+  activeLightsCount: 4,
+  totalLightsCount: 12,
+  securityStatus: "Armed Home",
+};
+
+export interface HomeAssistantWidgetProps {
+  size?: WidgetSize;
+  data?: HomeAssistantData;
+  isLoading?: boolean;
+}
+
+export const HomeAssistantWidget: React.FC<HomeAssistantWidgetProps> = ({
   size = "medium",
+  data: propData,
+  isLoading: propLoading,
 }) => {
-  const [data, setData] = useState<HomeAssistantData | null>(null);
+  const [fetchedData, setFetchedData] = useState<HomeAssistantData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const data = propData ?? fetchedData;
+  const effectiveLoading = propLoading ?? (propData ? false : loading);
+
   useEffect(() => {
+    if (propData !== undefined) return;
+
+    let isMounted = true;
     fetch("/api/home-assistant")
-      .then((res) => res.json())
-      .then((json) => {
-        setData(json.data);
-        setLoading(false);
+      .then((res) => {
+        if (!res.ok) throw new Error("Fetch failed");
+        return res.json();
       })
-      .catch(() => setLoading(false));
-  }, []);
+      .then((json) => {
+        if (isMounted) {
+          setFetchedData(json.data ?? DEFAULT_HOME_ASSISTANT_DATA);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setFetchedData(DEFAULT_HOME_ASSISTANT_DATA);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [propData]);
 
   return (
-    <StandardWidget title="Home Telemetry" size={size} loading={loading} icon={<CloverIcon className="w-4 h-4 text-[#8EA483]" />}>
+    <StandardWidget title="Home Telemetry" size={size} loading={effectiveLoading} icon={<CloverIcon className="w-4 h-4 text-[#8EA483]" />}>
       {data && (
         <div className="flex flex-col justify-between h-full gap-2 p-1 overflow-hidden">
           <div className="flex items-center justify-between">

@@ -13,6 +13,9 @@ const meta: Meta<typeof HomeAssistantWidget> = {
       control: 'select',
       options: ['small', 'medium', 'large', 'xlarge'],
     },
+    isLoading: {
+      control: 'boolean',
+    },
   },
 };
 
@@ -40,5 +43,26 @@ export const Large: Story = {
 export const XLarge: Story = {
   args: {
     size: 'xlarge',
+  },
+};
+
+export const Loading: Story = {
+  args: {
+    size: 'medium',
+    isLoading: true,
+  },
+};
+
+export const CustomData: Story = {
+  args: {
+    size: 'large',
+    data: {
+      temperature: 65,
+      humidity: 55,
+      weatherCondition: 'Overcast & Cool',
+      activeLightsCount: 8,
+      totalLightsCount: 12,
+      securityStatus: 'Disarmed',
+    },
   },
 };

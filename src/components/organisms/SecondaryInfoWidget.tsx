@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { CloverIcon } from "../atoms/CloverIcon";
 
-interface PersonalData {
+export interface PersonalData {
   nowPlaying: {
     title: string;
     artist: string;
@@ -31,15 +31,64 @@ interface PersonalData {
   };
 }
 
-export const SecondaryInfoWidget: React.FC = () => {
-  const [data, setData] = useState<PersonalData | null>(null);
+const DEFAULT_PERSONAL_DATA: PersonalData = {
+  nowPlaying: {
+    title: "La Vie En Rose",
+    artist: "Louis Armstrong",
+    album: "Caresse d'Amour",
+    isPlaying: true,
+  },
+  weather: {
+    temp: 72,
+    high: 76,
+    low: 62,
+    condition: "Partly Sunny & Warm",
+    location: "Home Sanctuary",
+  },
+  reminders: [
+    { id: "1", text: "Sunset walk at Botanical Garden", time: "6:30 PM", completed: false },
+    { id: "2", text: "Pick up fresh dinner ingredients", time: "7:45 PM", completed: true },
+    { id: "3", text: "Anniversary weekend booking", time: "Tomorrow", completed: false },
+  ],
+  anniversary: {
+    title: "Anniversary Countdown",
+    daysLeft: 42,
+    targetDate: "October 14, 2025",
+    subtitle: "Years of shared laughter & love",
+  },
+};
+
+export interface SecondaryInfoWidgetProps {
+  data?: PersonalData;
+}
+
+export const SecondaryInfoWidget: React.FC<SecondaryInfoWidgetProps> = ({
+  data: propData,
+}) => {
+  const [fetchedData, setFetchedData] = useState<PersonalData | null>(null);
+
+  const data = propData ?? fetchedData;
 
   useEffect(() => {
+    if (propData !== undefined) return;
+
+    let isMounted = true;
     fetch("/api/personal")
-      .then((res) => res.json())
-      .then((json) => setData(json.data))
-      .catch((err) => console.error(err));
-  }, []);
+      .then((res) => {
+        if (!res.ok) throw new Error("Fetch failed");
+        return res.json();
+      })
+      .then((json) => {
+        if (isMounted) setFetchedData(json.data ?? DEFAULT_PERSONAL_DATA);
+      })
+      .catch(() => {
+        if (isMounted) setFetchedData(DEFAULT_PERSONAL_DATA);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [propData]);
 
   if (!data) {
     return (
