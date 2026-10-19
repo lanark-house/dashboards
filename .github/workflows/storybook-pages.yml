@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Storybook Artifact
-        uses: dawidd6/action-download-artifact@v9
+        uses: dawidd6/action-download-artifact@v27
         with:
           workflow: storybook-build.yml
           commit: ${{ github.sha }}
